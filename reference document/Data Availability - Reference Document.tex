@@ -73,13 +73,13 @@
             %     \item \textbf{Ordering Attacker:} This type of adversary wants to disrupt the decentralized data hosting layer by either not allowing the blockchain to grow or by trying the network to accept two contradictory blocks. As our blockchain does not enforce any transactional logic but only enforces a strict ordering, the adversary of this type want to make the network accept two blocks with different orderings. We assume that at most $\frac{1}{3}$ of validators can be controlled by this adversary. 
             %     \item \textbf{Data Availability Attacker:} The DA attacker wants to hide a small portion of the data present inside a block and wants the network to accept such a block. We assume that majority of full nodes can go rogue and be controlled by this type of an adversary, but there is at least one honest full node with the entire data. We note that the DA attacker can target data present in any block and not just the most recent block. In particular, we want the \DA{} to be resistant against such an attacker for historical data as well. 
             % \end{enumerate}
-        \subsubsection{System Goals}
+        \subsubsection{System Goals}\label{goals}
             Our design for the \DA{} should provide the following guarantees:
             \begin{enumerate}
-                \item \label{goal:one} The decentralized data availability blockchain keeps producing a canonical chain of blocks even in the presence of an adversary that controls at most $\frac{1}{3}$ of the validator nodes in the network. 
-                \item \label{goal:two} The honest participants of the system will not accept a block whose underlying data is unavailable even if a very powerful adversary is controlling all the other nodes in the system.
+                \item \label{goal:one} The decentralized data availability blockchain keeps producing a canonical chain of blocks even in the presence of an adversary that controls $<\!\!\frac{1}{3}$ of the validator nodes in the network. 
+                \item \label{goal:two} The honest participants of the system with access to the canonical chain of block headers will not accept a block whose underlying data is unavailable even if a very powerful adversary is controlling all the other nodes in the system.
             \end{enumerate}
-            We want to guarantee achieving both these system goals. We want to emphasize that both the goals have different adversarial assumptions. Goal \ref{goal:one} ensures that the blockchain system continues to function in a decentralized manner as long as a super-majority of validator nodes remain honest. Goal \ref{goal:two} ensures that an outside participant like an application running a light node need not trust any full node to have the guarantee that the underlying data for a particular block is available. This is an extremely strong assumption which eliminates any trust assumption to detect data hiding attempt. In the next sections we discuss our construction ideas and argue that they achieve these goals. 
+            We want to guarantee achieving both these system goals. We want to emphasize that both the goals have different adversarial assumptions. Goal \ref{goal:one} ensures that the blockchain system continues to function in a decentralized manner as long as a super-majority of validator nodes remain honest. Goal \ref{goal:two} ensures that an outside participant like an application running a light node, who has access to the canonical chain of block headers, need not trust any full node to have the guarantee that the underlying data for a particular block is available. This is an extremely strong assumption which eliminates any trust assumption to detect data hiding attempt. In the next sections we discuss our construction ideas and argue that they achieve these goals. 
 
 \section{Designing the Data Availability Layer}
     \subsection{Primitives}
@@ -145,14 +145,14 @@
     \subsection{Attack Vectors}
         Any \DA{} needs to counter the following attacks on data availability:
         \begin{enumerate}
-            \item \label{attack:ordering} A super-majority of the validators in the \DA{} wants to change the ordering of an already broadcasted block.
+            \item \label{attack:ordering} A super-majority of the validators in the \DA{} wants to change the ordering of an already finalized block.
             \item \label{attack:wrong} A super-majority of the validators create a wrong block header, i.e., the commitment of the data present in the header is wrong. 
             \item \label{attack:hide} A super-majority of the validators want to hide at least one chunk of the block. For a light node, this would mean not being able to detect hiding of data with a non-negligible probability. For a full node, this would mean not being able to reconstruct the data. 
         \end{enumerate}
 
-        We take the case of the super-majority of validators attacking the \DA{} because we want honest minority assumption to be sufficient for our design. 
+        We take the case of the super-majority of validators attacking the \DA{} because we want to minimize honesty assumption required for our design. 
         
-        Under the assumption that consensus is reached, the reordering attack (attack \ref{attack:ordering}) is hard to mount. This is because, to successfully mount this attack the attacker would need to break the non-equivocation property of the underlying consensus. 
+        Under the assumption that finality is reached, the reordering attack (attack \ref{attack:ordering}) is hard to mount. This is because, to successfully mount this attack the attacker would need to break the non-equivocation property of the underlying consensus. In particular, the finality layer ensures that if equivocation occurs, the dishonest parties can be identified and their stake slashed. 
 
         In the subsequent sections we show how Attack \ref{attack:wrong} and Attack \ref{attack:hide} is countered in each of the two design choices - CMT and Kate Commitments.
 
@@ -167,13 +167,15 @@
 
         The random sampling from base layer by a light client also samples higher layers. As each layer is erasure coded, hence, probability of hiding any chunk from any of the layers of the Merkle tree is extremely low for sufficiently many samplings. A full client who wants to reconstruct the Merkle tree needs access to the block header which contains the root hashes. Along with that, it needs $(1-\alpha)n$ samples of the each layer, where $n$ is the total chunks in the layer and $\alpha$ is the minimum fraction of coded symbols a malicious block producer needs to make unavailable to prevent full decoding. With these information it can decode the entire tree. The entire decoding strategy along with the hash-aware peeling decoder construction is given in \cite{yu2019coded}. 
 
-        Hence, the CMT approach can mitigate both attack \ref{attack:wrong} and \ref{attack:hide}. 
+        Hence, the CMT approach can mitigate both attack \ref{attack:wrong} and \ref{attack:hide}.  We however note that the mitigation assumes a single honest full node, which is not as strong as Goal \ref{goal:two} defined in Section \ref{goals}. 
 
     \subsection{Kate Commitments}
         In the Kate commitment based approach, attack \ref{attack:wrong} amounts to a wrong commitment by the block producer. Without loss of generality, suppose $C_1$ is wrong. This would mean that at least one out of $D[1][1]$ to $D[1][n]$ does not belong to $C_1$. Again, let us assume $D[1][1] \not\in C_1$. This would mean that at least one of this is true: $D[n+1][1] \not\in C_{n+1}, \dots, D[2n][1] \not\in C_{2n}$. This is because $C_{n+1}, \dots, C_{2n}$ are extended from $C_1, \dots, C_n$ and $D[n+1][1], \dots, D[2n][1]$ are extended from $D[1][1], \dots, D[n][1]$. Hence, such an attack is caught by a light client with overwhelming probability. 
 
-        In case of attack \ref{attack:hide}, a light client querying constant samples can achieve arbitrarily high confidence that the data is indeed available. This is due to the redundancy in the data as discussed previously. For a full node, it needs to download the at least $n$ chunks from each column so that it can reconstruct the entire extended data. It checks the commitments to know whether the downloaded data is correct. A column full node needs to perform similar operations but only for one column of data. 
-
+        In case of attack \ref{attack:hide}, a light client querying constant samples can achieve arbitrarily high confidence that the data is indeed available. This is due to the redundancy in the data as discussed previously. For a full node, it needs to download the at least $n$ chunks from each column so that it can reconstruct the entire extended data. It checks the commitments to know whether the downloaded data is correct. A column full node needs to perform similar operations but only for one column of data.
+        
+        Hence, this approach mitigates all discussed attacks and achieves the goals set in Section \ref{goals}.
+        
 \section{Additional Modules}
     \subsection{Application Specific Data Retrieval}
         We would want our construction to allow applications to download data which is only relevant to them. To enable this, we want the full nodes (or column full nodes) to prove to an application client that the complete set of data relevant to the application has been communicated.
