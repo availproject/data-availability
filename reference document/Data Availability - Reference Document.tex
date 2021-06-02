@@ -15,26 +15,26 @@
 
 \begin{document}
 
-\title{Data Availability}
-\author{Matic Network \vspace{1cm}}
+\title{Avail - The Data Availability Blockchain}
+\author{Polygon \vspace{1cm}}
 
 \begin{abstract}
     % We discuss a blockchain design where the data hosting and availability, contract execution and dispute resolution is decoupled. We further propose the details of the data layer which guarantees availability. 
-    We address the scalability issue in present blockchain architecture and propose a design which decouples the data hosting, execution and verification. We discuss some constructions of the data hosting layer that guarantee data availability.
+    We study the scalability issue in present blockchain architecture and propose a design which decouples the data hosting, execution and verification. We discuss few suitable primitives for the construction of a data hosting layer that guarantees data availability. We sketch out the system goals, design, security and implementation details of Polygon Avail which is our availability focussed blockchain solution. 
 \end{abstract}
 
 \maketitle
 
 
 \section{Present DApp Architecture}
-    In present day Ethereum-like ecosystems, there are mainly three types of peers - validator nodes, full nodes and light clients. A block is appended to the blockchain by a validator node which collects transactions from the mempool, executes them, generates the block before propagating it across the network. The block contains a small block header containing digest and metadata related to the transactions included in the block. The full nodes across the network receive this block and verify its correctness by re-executing the transactions included in the block. The light clients only fetch the block header and fetch transaction details from neighbouring full nodes on an as-needed basis. The metadata inside the block header enables the light client to verify the authenticity of the received transactional details. 
+    In present day Ethereum-like ecosystems, there are mainly three types of peers - validator nodes, full nodes and light clients. A block is appended to the blockchain by a validator node which collects transactions from the mempool, executes them, generates the block before propagating it across the network. The block contains a small block header containing digest and metadata related to the transactions included in the block. The full nodes across the network receive this block and verify its correctness by re-executing the transactions. The light clients only fetch the block header and fetch transaction details from neighbouring full nodes on an as-needed basis. The metadata inside the block header enables the light client to verify the authenticity of the received transactional details. 
 
     While this architecture is extremely secure and has been widely adopted, it has some serious practical limitations~\cite{Stanford:2020}. Because every transaction is executed by all the full nodes in the system, it becomes a bottleneck resulting in limited throughput. With wide adoption of such DApps, the number of transactions grow rapidly resulting in increased cost of including a transaction into a block. To counter these issues, layer 2 solutions have been proposed. 
 
-    Layer 2 solutions like Matic work by creating a Plasma chain anchored to the main chain like Ethereum. In such an architecture, DApps reside on the Plasma chain and only periodic checkpoints are recorded on the main chain. The throughput in such a system depends on the transaction processing rate of the Plasma chain whereas any dispute resolution can be performed on the main chain. The benefit of such a decoupled execution and dispute resolution is that it gives much higher throughput while retaining the security properties. In practice, multiple such Plasma chains may function in parallel resulting in improved processing power of the system, while retaining the security of the main chain. 
+    Layer 2 solutions like Polygon work by creating a Plasma chain anchored to the main chain like Ethereum. In such an architecture, DApps reside on the Plasma chain and only periodic checkpoints are recorded on the main chain. The throughput in such a system depends on the transaction processing rate of the Plasma chain whereas any dispute resolution can be performed on the main chain. The benefit of such a decoupled execution and dispute resolution is that it gives much higher throughput while retaining the security properties. In practice, multiple such Plasma chains may function in parallel resulting in improved processing power of the system, while retaining the security of the main chain. 
 
 \section{Plasma, Optimistic Rollup and ZK Rollup}\label{rollup}
-    A major part of a successful layer 2 solution is the execution and verification framework. Plasma based sidechain approach, like the one followed by Matic, can process thousands of transactions and submit only a single hash as checkpoint to the main chain. However, it faces an important issue. In case of a dispute on the sidechain, Plasma lacks an efficient mechanisms for users to exit the sidechain. Also, Plasma lacks the ability to process arbitrary instructions although they are supported by a quasi Turing-complete main chain like Ethereum. 
+    A major part of a successful layer 2 solution is the execution and verification framework. Plasma based sidechain approach, like the one followed by Polygon, can process thousands of transactions and submit only a single hash as checkpoint to the main chain. However, it faces an important issue. In case of a dispute on the sidechain, Plasma lacks an efficient mechanisms for users to exit the sidechain. Also, Plasma lacks the ability to process arbitrary instructions although they are supported by a quasi Turing-complete main chain like Ethereum. 
 
     Optimistic Rollups like Arbitrum and Optimism use the optimistic execution paradigm where a manager/operator executes the sidechain transactions and submits an assertion on the main chain. In case of dispute, other participants can challenge the assertion on chain within a fixed timeout and then the main chain performs the dispute resolution. While this scales up the transaction processing rate, it has a few downsides like delayed finality for non-fungible assets among others. 
 
@@ -58,11 +58,11 @@
             \item \textbf{Verification/Dispute Resolution:} This component represents the main chain to which the system is anchored. The security of the design is dependent on the robustness and security properties of this component. The checkpoint/assertion/\-proof submitted by \EX{} is processed by this layer to guarantee that only valid state transitions are accepted in the system (provided that the data is available). We refer to this component as the \DR. 
         \end{itemize}
 
-        In this work, we are proposing the \DA. We envision the multiple roll-up initiatives or legacy execution layers to form the \EX. The \DR{} can be any secure blockchain layer which supports the execution verification.
+        In this work, we are proposing Avail, which acts as the \DA. We envision the multiple roll-up initiatives or legacy execution layers to form the \EX. The \DR{} can be any secure blockchain layer which supports the execution verification.
     
     \subsection{Participants and System Goals}
         \subsubsection{Types of Nodes} 
-            We consider the following types of nodes for our \DA: 
+            We consider the following types of nodes for Avail: 
             \begin{itemize}
                 \item \textbf{Full Nodes:} The full nodes download the blocks and validate their correctness but do not participate in consensus. They store the blockchain but are not incentivized to participate or remain honest.
                 \item \textbf{Validator Nodes:} The validator nodes take part in block generation and decide on transaction inclusion and ordering. These nodes are incentivized to participate in consensus and host the blockchain. Essentially, they are also full nodes with stake in the system. 
@@ -74,7 +74,7 @@
             %     \item \textbf{Data Availability Attacker:} The DA attacker wants to hide a small portion of the data present inside a block and wants the network to accept such a block. We assume that majority of full nodes can go rogue and be controlled by this type of an adversary, but there is at least one honest full node with the entire data. We note that the DA attacker can target data present in any block and not just the most recent block. In particular, we want the \DA{} to be resistant against such an attacker for historical data as well. 
             % \end{enumerate}
         \subsubsection{System Goals}\label{goals}
-            Our design for the \DA{} should provide the following guarantees:
+            Our design for Avail should provide the following guarantees:
             \begin{enumerate}
                 \item \label{goal:one} The decentralized data availability blockchain keeps producing a canonical chain of blocks even in the presence of an adversary that controls $<\!\!\frac{1}{3}$ of the validator nodes in the network. 
                 \item \label{goal:two} The honest participants of the system with access to the canonical chain of block headers will not accept a block whose underlying data is unavailable even if a very powerful adversary is controlling all the other nodes in the system.
@@ -130,16 +130,8 @@
 
         For the column full nodes, they can fetch and keep only a column of the matrix $D$. They would extend each column to check whether they belong to the extended set of commitments. This is possible because of the homomorphic nature of the commitments and witnesses. In particular, having $D[1][j], \dots, D[n][j]$ and $w[1][j], \dots, w[n][j]$, the node can extend both to $2n$ points and immediately verify whether the extended openings are valid. If the number of such column full node is $O(m)$, and each column full node ensures at least one column is available, then collaboratively the entire data is available within the column full nodes. 
 
-        As the block size grows, so does the number of commitments (keeping number of columns fixed, the number of rows grow). Hence the Commitment size grows linear to that of the block size. However, we do not need any fraud proofs in such a system. For each light client, the communication and computational overhead is constant. For each full node, the computational overhead is $O(m*n log(n))$ as it needs to perform $m$ FFTs, one for each column, along with some pairing checks for verification. However, a column node has to only perform $O(n log(n))$ work because it works on a single column of data. 
+        As the block size grows, so does the number of commitments (keeping number of columns fixed, the number of rows grow). Hence the commitment size grows linear to that of the block size. However, we do not need any fraud proofs in such a system. For each light client, the communication and computational overhead is constant. For each full node, the computational overhead is $O(m*n log(n))$ as it needs to perform $O(m)$ FFTs, $O(1)$ for each column, along with some pairing checks for verification. However, a column node has to only perform $O(n log(n))$ work because it works on a single column of data. 
 
-    \subsection{Consensus}
-        We need our validators to reach consensus on the next block which contains the ordered set of transactions. To achieve that, we use a consensus protocol that satisfies the following:
-        \begin{itemize}
-            \item \textbf{Safety:} No two honest nodes have finalized chain of blocks with two conflicting blocks. In our context, this means that all honest nodes agree on a unique ordering of transactions. 
-            \item \textbf{Liveness:} Irrespective of previous events, new blocks can always be added to the chain and finalized. In our context, this ensures that new transactions are always added in the chain. 
-        \end{itemize} 
-
-        Although there exists many possible blockchain consensus, we opted for the  Proof-of-Stake family of consensus algorithms. In particular we chose the hybrid consensus used by Polkadot~\cite{polkadot_consensus:2020} called BABE~\cite{BABE:2020} and GRANDPA~\cite{grandpa}. It is called a hybrid consensus as it has two separate layers for block production (BABE) and finality (GRANDPA). Together, they ensure fast production with provable finality in a partially synchronous network model. 
 
 \section{Analysis}
     \subsection{Attack Vectors}
@@ -176,13 +168,49 @@
         
         Hence, this approach mitigates all discussed attacks and achieves the goals set in Section \ref{goals}.
         
+\section{Implementation}
+    In this section, we discuss the implementation details of Avail. Among the two techniques discussed above, we use the Kate commitment based approach in order to avoid fraud proofs and provide strong data availability guarantees even in presence of powerful adversaries. 
+
+    \subsection{Consensus}
+        We need our validators to reach consensus on the next block which contains the ordered set of transactions along with redundant erasure coded data. 
+        % To achieve that, we use a consensus protocol that satisfies the following:
+        % \begin{itemize}
+        %     \item \textbf{Safety:} No two honest nodes have finalized chain of blocks with two conflicting blocks. In our context, this means that all honest nodes agree on a unique ordering of transactions. 
+        %     \item \textbf{Liveness:} Irrespective of previous events, new blocks can always be added to the chain and finalized. In our context, this ensures that new transactions are always added in the chain. 
+        % \end{itemize} 
+        Although there exists many possible blockchain consensus protocols, we opted for the  Proof-of-Stake (PoS) family of consensus algorithms. We wanted a PoS consensus that supports high number of validators, provable finality and a robust security framework. In particular, we chose the BABE/GRANDPA hybrid consensus used by Polkadot~\cite{polkadot_consensus:2020}. It uses two separate protocols for block production and finality.
+        
+        The block production is done using Blind Assignment for Blockchain Extension protocol (BABE)~\cite{BABE:2020}. The block producers produce blocks based on a Verifiable Random Function (VRF). The protocol does not assume access to a central clock. In case no validator is chosen as the block producer for a particular slot, or if the chosen producer(s) go down, there is a secondary block producer who can step in. BABE ensures liveness which guarantees that transactions submitted to honest players will eventually be inserted into the chain. 
+        
+        GRANDPA (GHOST-based Recursive ANcestor Deriving Prefix Agreement)~\cite{grandpa} is a finality gadget ensuring provable finality. Without the finality gadget, the users can only have probabilistic finality, like in classical blockchain systems. GRANDPA guarantees that blocks reach quicker finality and a finalized block can never be reverted. 
+
+    \subsection{Full Nodes}
+        To implement our design in a standalone blockchain, we use the Substrate framework~\footnote{https://github.com/paritytech/substrate}. Substrate provides great flexibility to implement custom runtime logic with inherent BABE/GRANDPA consensus support. Our design needed major changes in the substrate codebase and hence we worked on a fork~\footnote{https://github.com/maticnetwork/substrate/tree/da-poc}. The major changes that we made are:
+        \begin{itemize}
+            \item The contents of the block are arranged into the data matrix, extended and polynomial commitment generation is performed during the block building process. 
+            \item The header structure is changed to contain the commitments as part of the header. 
+            \item Block sizes are made dynamic, according to the number of transactions on the mempool. However, the maximum block size allowed is 4 MB, including the data redundancy.  
+            \item Additional RPC methods to support data availability queries are introduced. These can be used by light clients to gain confidence about availability. 
+        \end{itemize}
+        We have modified the Polkadot Apps~\footnote{https://github.com/maticnetwork/apps} to build our block explorer~\footnote{https://polygon-da-explorer.matic.today/} for our development network. 
+
+    \subsection{Light Client}
+        In our present design, light clients are application nodes that participate in the system without investing resources to host a full node. Keeping this in mind, we have developed a light client~\footnote{https://github.com/maticnetwork/da-light-client} which keeps track of the chain header and performs availability queries to gain confidence on the availability of interested blocks. The client can gain as high confidence as deemed suitable for the specific application. We envisage the applications using our chain to host a light client.
+
+    \subsection{On-chain Availability Guarantee}
+        The \DR{} layer, when validating proofs or resolving dispute, need assurance that the underlying data is indeed available (as discussed in Sec \ref{rollup}). To enable this in an organic manner, we deploy a light client as a smart contract on Ethereum (or any main chain which supports this logic). This allows the checkpoint/assertion/proof accepting smart contract to communicate with this light client contract and directly get DA assurance. 
+
+        We design an on-chain light client using Chainlink Oracle Network. Whenever the on-chain contract needs availability guarantee for a particular block, it requests the on-chain Chainlink Oracle which uses events to communicate with multiple off-chain oracle nodes. These off-chain nodes use their own light clients or hosted instances to gain confidence and communicate the same back to the original contract through the Chainlink Oracle. The incentivization is handled using the LINK token. 
+
+        Apart from the oracle based approach, we are also looking into other means of developing on-chain light clients that have stronger data availability guarantees. 
+
 \section{Additional Modules}
     \subsection{Application Specific Data Retrieval}
         We would want our construction to allow applications to download data which is only relevant to them. To enable this, we want the full nodes (or column full nodes) to prove to an application client that the complete set of data relevant to the application has been communicated.
 
         % To illustrate, let us assume a roll-up \textit{R} operates on our proposed \DA. Hence, it would want to download only transactions which are intended for \textit{R}. 
         
-        For the CMT based approach, we can use a Namespaced Merkle Tree as described in \cite{lazyledger}. We would need to make some alterations to the original construction to make it work with the CMT. We leave the exact construction details for future work. 
+        % For the CMT based approach, we can use a Namespaced Merkle Tree as described in \cite{lazyledger}. We would need to make some alterations to the original construction to make it work with the CMT. We leave the exact construction details for future work. 
 
         For the Kate Commitment based approach, let us assume that each data chunk is prepended with an application identifier (ID) which is unique to the application. 
         % For our example, let the ID for \textit{R} be $R$. 
@@ -190,21 +218,19 @@
 
         With this setup, an application client can query its data from a full node. The full node need to give openings to all chunks from $D[i_1][j_1]$ to $D[i_2][j_2]$, taken column-wise. On top of that, it also needs to give openings to $D[i_1-1][j_1]$ (or $D[n][j_1-1]$ if $i_1=0$) and $D[i_2+1][j_2]$ (or $D[0][j_2+1]$ if $i_2=n$). The client can then verify that for all openings within $D[i_1][j_1]$ to $D[i_2][j_2]$, the data starts with the correct ID and for the remaining two openings, the data has a different ID. This would prove the client that it has received all relevant data, under the assumption that the ordering is done correctly (equivalently, that supermajority of validators are honest in \DA). 
 
-        In case the client approaches column full nodes, it would need to approach atmost ($\lceil size/n \rceil + 2$) column full nodes. 
+        In case the client approaches column full nodes, it would need to approach at most ($\lceil size/n \rceil + 2$) column full nodes. 
     
-    \subsection{Light Client as Ethereum Smart Contract}
-        The \DR{} layer, when validating proofs or resolving dispute, need assurance that the underlying data is indeed available (as discussed in Sec \ref{rollup}). To enable this in an organic manner, we plan to deploy a light client as a smart contract on Ethereum (or any main chain which supports this logic). This would allow the checkpoint/assertion/proof accepting smart contract to communicate with this light client contract and directly get DA assurance. We still need to figure out how to implement such a contract. Specifically, how do the sampling take place in practice?
 
-\section{Related Work}
-    Lazyledger \cite{lazyledger} proposes a \DA{} construction using higher dimensional erasure coding. TODO: compare and contrast. 
+% \section{Related Work}
+%     Lazyledger \cite{lazyledger} proposes a \DA{} construction using higher dimensional erasure coding. TODO: compare and contrast. 
 
-\section{Open Issues}
-    We note that a successful implementation of a \DA{} will need to address these issues:
-    \begin{itemize}
-        \item In Kate Commitment based scheme, a trusted setup phase is needed. A deeper look into the details of it is needed. Some representative numbers are present in \cite{dankrad_poly:2019}.
-        \item Aligning data chunks into field elements needs some engineering. Also, choosing a formally verified bilinear pairing library with high performance is critical. A good place to start would be blst library. 
-        \item Choice of parameters need to be carefully addressed. In CMT approach, the number of hashes in the root, coding rate, hashes per chunk, base layer data per chunk, etc., need to be chosen. In Kate commitment approach, the number of columns, choice of underlying group, etc., need to be fixed. In both approaches, simple parallelisation is possible which would increase efficiency. 
-    \end{itemize}
+% \section{Open Issues}
+%     We note that a successful implementation of a \DA{} will need to address these issues:
+%     \begin{itemize}
+%         \item In Kate Commitment based scheme, a trusted setup phase is needed. A deeper look into the details of it is needed. Some representative numbers are present in \cite{dankrad_poly:2019}.
+%         \item Aligning data chunks into field elements needs some engineering. Also, choosing a formally verified bilinear pairing library with high performance is critical. A good place to start would be blst library. 
+%         \item Choice of parameters need to be carefully addressed. In CMT approach, the number of hashes in the root, coding rate, hashes per chunk, base layer data per chunk, etc., need to be chosen. In Kate commitment approach, the number of columns, choice of underlying group, etc., need to be fixed. In both approaches, simple parallelisation is possible which would increase efficiency. 
+%     \end{itemize}
 
 \bibliographystyle{ACM-Reference-Format}
 \bibliography{DA_references}
