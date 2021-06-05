@@ -198,11 +198,28 @@
         In our present design, light clients are application nodes that participate in the system without investing resources to host a full node. Keeping this in mind, we have developed a light client~\footnote{https://github.com/maticnetwork/da-light-client} which keeps track of the chain header and performs availability queries to gain confidence on the availability of interested blocks. The client can gain as high confidence as deemed suitable for the specific application. We envisage the applications using our chain to host a light client.
 
     \subsection{On-chain Availability Guarantee}
-        The \DR{} layer, when validating proofs or resolving dispute, need assurance that the underlying data is indeed available (as discussed in Sec \ref{rollup}). To enable this in an organic manner, we deploy a light client as a smart contract on Ethereum (or any main chain which supports this logic). This allows the checkpoint/assertion/proof accepting smart contract to communicate with this light client contract and directly get DA assurance. 
+        The \DR{} layer, when validating proofs or resolving dispute, need assurance that the underlying data is indeed available (as discussed in Sec \ref{rollup}). To enable this in an organic manner, we want to guarantee data availability to a smart contract on Ethereum (or any main chain which supports this logic). This allows the checkpoint/assertion/proof accepting smart contract to communicate with this light client contract and directly get DA assurance. 
 
-        We design an on-chain light client using Chainlink Oracle Network. Whenever the on-chain contract needs availability guarantee for a particular block, it requests the on-chain Chainlink Oracle which uses events to communicate with multiple off-chain oracle nodes. These off-chain nodes use their own light clients or hosted instances to gain confidence and communicate the same back to the original contract through the Chainlink Oracle. The incentivization is handled using the LINK token. 
+        We discuss three main approaches on how to provide the on-chain DA guarantee. We also briefly mention their advantages and limitations. 
 
-        Apart from the oracle based approach, we are also looking into other means of developing on-chain light clients that have stronger data availability guarantees. 
+        \subsubsection{Light Client as a Smart Contract}
+            The most obvious approach to achieve DA guarantee is to host the conventional light client as a smart contract. This provides the same guarantees on-chain as the off-chain light client. However, there are three main challenges to this approach:
+            \begin{itemize}
+                \item The smart contract needs a continuous feed of Avail chain headers. The primary concern is who submits these headers, how do we verify the submitted headers and how do we compensate the cost these submitting parties incur. We can take ideas from existing cross-chain bridging solutions to address these concerns. 
+                \item The DA guarantee is highly dependent on the randomness of the queries. Smart contracts, on the other hand, can only run deterministic programs. We may use solutions like RANDAO~\footnote{https://github.com/randao/randao} to eliminate this bottleneck. 
+                \item Even if the header is available to the contract, query is generated randomly and proof is submitted, the smart contract still needs to verify the responses to get confidence that the data is available. On-chain Kate commitment verification is challenging without supporting opcode for field operations. We could propose new pre-compiled contracts to support them but implementation requires consensus within the community and a hard fork.  
+            \end{itemize}
+        
+        \subsubsection{Data Availability Oracle}
+            Another widely accepted approach for off-loading expensive tasks from smart contracts is the oracle based approach. When on-chain DA guarantee for a particular block is needed, multiple oracle nodes can be incentivized to submit their respective confidence factors. The on-chain contract can aggregate the metrics to decide whether it has sufficient guarantee that the data is available. Although well-accepted within the community, this approach has to trust the oracle nodes resulting in reduced security guarantees. The amount of trust can be limited by proper incentivization and decentralization. 
+
+        \subsubsection{Non-interactive DA proofs}
+            The light client construction and security guarantees are based on an interactive protocol where the client queries to full nodes to get proofs which they verify to gain confidence on the availability. We need to explore making the protocol non-interactive where the light clients can subscribe to availability proofs without compromising the security. However, the guarantee that the data is available now does not enforce its availability in the future. We need to carefully design the protocol keeping security, efficiency and practicality in mind. 
+        
+        \subsubsection{Proof of Concept Implementation}
+            To emphasize the viability of the protocol, we have implemented an on-chain light client using Chainlink Oracle Network, based on the second design discussed above. Whenever the on-chain contract needs availability guarantee for a particular block, it requests the on-chain Chainlink Oracle which uses events to communicate with multiple off-chain oracle nodes. These off-chain nodes use their own light clients or hosted instances to gain confidence and communicate the same back to the original contract through the Chainlink Oracle. The incentivization is handled using the LINK token. 
+
+            Apart from the oracle based approach, we are also looking into the other approaches discussed above to develop on-chain light clients that have stronger data availability guarantees. 
 
 \section{Additional Modules}
     \subsection{Application Specific Data Retrieval}
