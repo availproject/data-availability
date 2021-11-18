@@ -1,9 +1,14 @@
-# Data Availability
+# Polygon Avail
 
-This repo tracks the developments on the effort to create a data availability layer. 
-- [Reference Document](https://github.com/maticnetwork/data-availability/blob/master/reference%20document/Data%20Availability%20-%20Reference%20Document.pdf) containing the overall rationale, design and theoretical background.
-- We have used [modified Substrate](https://github.com/maticnetwork/substrate/tree/da-poc) to implement our DA chain. We use [this repo](https://github.com/maticnetwork/da-light-client) to track the light client code. We use [forked Polkadot Apps](https://github.com/maticnetwork/apps) to design our DA block explorer. 
-- [FAQ Page](https://github.com/maticnetwork/data-availability/wiki/Frequently-Asked-Questions)
+Avail is a data availability focused blockchain. Here is a list of GitHub repo tracking the various development efforts in this regard. 
 
+|    Name (with link)    |                                       Description                                       |
+|:----------------------:|:---------------------------------------------------------------------------------------:|
+| [Reference Document](https://github.com/maticnetwork/data-availability/blob/master/reference%20document/Data%20Availability%20-%20Reference%20Document.pdf)     | Document containing the overall rationale, design decisions and theoretical backgrounds |
+| [Substrate](https://github.com/maticnetwork/substrate/tree/da-poc)              | Avail node implementation repo. Built using Substrate.                        |
+| [Light Client](https://github.com/maticnetwork/da-light-client)                 | Light client designed to check data availability proofs on Avail.             |
+| [Explorer](https://github.com/maticnetwork/apps)                                | Avail explorer implementation repo. Built using Polkadot apps.                |
+| [Documentation](https://avail-docs.matic.today/)                                | Avail documentation containing how to setup and how to use Avail.             |
+| [Alternate Light Client](https://github.com/maticnetwork/avail-light/tree/prabal/rust-client) | A Rust based alternative light client.                          |
 
 Suggestions and feedbacks are welcome. 
