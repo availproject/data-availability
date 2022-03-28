@@ -9,6 +9,6 @@ Avail is a data availability focused blockchain. Here is a list of GitHub repo t
 | [Light Client](https://github.com/maticnetwork/da-light-client)                 | Light client designed to check data availability proofs on Avail.             |
 | [Explorer](https://github.com/maticnetwork/apps)                                | Avail explorer implementation repo. Built using Polkadot apps.                |
 | [Documentation](https://avail-docs.matic.today/)                                | Avail documentation containing how to setup and how to use Avail.             |
-| [Alternate Light Client](https://github.com/maticnetwork/avail-light/tree/prabal/rust-client) | A Rust based alternative light client.                          |
+| [Alternate Light Client](https://github.com/maticnetwork/avail-light) | A Rust based alternative light client.                          |
 
 Suggestions and feedbacks are welcome. 
