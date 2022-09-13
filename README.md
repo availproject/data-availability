@@ -12,7 +12,7 @@ Avail is a data availability focused blockchain. Here is a list of GitHub repo t
 | [Reference Document](https://github.com/maticnetwork/data-availability/blob/master/reference%20document/Data%20Availability%20-%20Reference%20Document.pdf)     | Document containing the overall rationale, design decisions and theoretical backgrounds                              |
 | [Avail Node](https://github.com/maticnetwork/avail)                             | Avail node implementation repo. Built using Substrate.              |
 | [Light Client](https://github.com/maticnetwork/avail-light)                     | Light client designed to check data availability proofs on Avail.   |
-| [Explorer](https://github.com/maticnetwork/apps)                                | Avail explorer implementation repo. Built using Polkadot apps.      |
+| [Explorer](https://github.com/maticnetwork/avail-apps)                                | Avail explorer implementation repo. Built using Polkadot apps.      |
 | [Documentation](https://docs.polygon.technology/docs/avail/introduction/what-is-avail/) | Avail documentation hub.                                    |
 | [Tests](https://github.com/maticnetwork/avail-test)                             | End to end tests for Avail.                                         |
 
