@@ -15,7 +15,7 @@
 
 \begin{document}
 
-\title{Avail - The Data Availability Blockchain}
+\title{Avail: The Data Availability Blockchain}
 \author{Polygon \vspace{1cm}}
 
 \begin{abstract}
@@ -38,7 +38,7 @@
 
     Optimistic Rollups like Arbitrum and Optimism use the optimistic execution paradigm where a manager/operator executes the sidechain transactions and submits an assertion on the main chain. In case of dispute, other participants can challenge the assertion on chain within a fixed timeout and then the main chain performs the dispute resolution. While this scales up the transaction processing rate, it has a few downsides like delayed finality for non-fungible assets among others. 
 
-    Zero-knowledge based rollups like Starkware and zkSync take the ZK based approach to off-chain execution. The operators execute the transactions and submit a ZK proof to the main chain. The main chain can quickly verify the proof and on-chain participants can be assured that only valid state transitions were performed. 
+    Zero-knowledge based rollups like Polygon Hermez and Starkware take the ZK based approach to off-chain execution. The operators execute the transactions and submit a ZK proof to the main chain. The main chain can quickly verify the proof and on-chain participants can be assured that only valid state transitions were performed. 
 
     Another class of rollup is Validium which is a hybrid between Plasma and ZK based rollups. They make use of Zero-knowledge based proofs of execution and at the same time keep the transactional data off-chain. Although this improves the throughput of the system, they suffer similar problems to that of Plasma. User funds can be frozen or seized and other crypto-economic attacks are also possible on such a system. \cite{StarkEx:2020} provides a detailed discussion on the approach and possible attacks. 
 
@@ -55,7 +55,7 @@
         \begin{itemize}
             \item \textbf{Data Hosting and Ordering:} This component would receive transactional data and order it without any execution. It would then store the data and ensure complete data availability in a decentralized manner. We call this component the \DA.
             \item \textbf{Execution:} The execution component should take ordered transactions from the \DA{} and execute them. It should create a checkpoint/assertion/proof and submit it to the \DR. We call this the \EX.
-            \item \textbf{Verification/Dispute Resolution:} This component represents the main chain to which the system is anchored. The security of the design is dependent on the robustness and security properties of this component. The checkpoint/assertion/\-proof submitted by \EX{} is processed by this layer to guarantee that only valid state transitions are accepted in the system (provided that the data is available). We refer to this component as the \DR. 
+            \item \textbf{Verification/Dispute Resolution:} This component represents the main chain to which the system is anchored. The security of the design is dependent on the robustness and security properties of this component. The checkpoint or assertion or proof submitted by \EX{} is processed by this layer to guarantee that only valid state transitions are accepted in the system (provided that the data is available). We refer to this component as the \DR. 
         \end{itemize}
 
         In this work, we are proposing Avail, which acts as the \DA. We envision the multiple roll-up initiatives or legacy execution layers to form the \EX. The \DR{} can be any secure blockchain layer which supports the execution verification.
@@ -128,7 +128,7 @@
 
         It then verifies for each row of $D'$ whether the commitment to $i^{th}$ row is $C_i$ for $1 \leq i \leq 2n$. 
 
-        For the column full nodes, they can fetch and keep only a column of the matrix $D$. They would extend each column to check whether they belong to the extended set of commitments. This is possible because of the homomorphic nature of the commitments and witnesses. In particular, having $D[1][j], \dots, D[n][j]$ and $w[1][j], \dots, w[n][j]$, the node can extend both to $2n$ points and immediately verify whether the extended openings are valid. If the number of such column full node is $O(m)$, and each column full node ensures at least one column is available, then collaboratively the entire data is available within the column full nodes. 
+        For the column full nodes, they can fetch and keep only a column of the matrix $D$. They would extend each column to check whether they belong to the extended set of commitments. This is possible because of the homomorphic nature of the commitments and witnesses. In particular, having $D[1][j], \dots,\allowbreak D[n][j]$ and $w[1][j],\allowbreak \dots, w[n][j]$, the node can extend both to $2n$ points and immediately verify whether the extended openings are valid. If the number of such column full node is $O(m)$, and each column full node ensures at least one column is available, then collaboratively the entire data is available within the column full nodes. 
 
         As the block size grows, so does the number of commitments (keeping number of columns fixed, the number of rows grow). Hence the commitment size grows linear to that of the block size. However, we do not need any fraud proofs in such a system. For each light client, the communication and computational overhead is constant. For each full node, the computational overhead is $O(m*n log(n))$ as it needs to perform $O(m)$ FFTs, $O(1)$ for each column, along with some pairing checks for verification. However, a column node has to only perform $O(n log(n))$ work because it works on a single column of data. 
 
@@ -185,17 +185,17 @@
         GRANDPA (GHOST-based Recursive ANcestor Deriving Prefix Agreement)~\cite{grandpa} is a finality gadget ensuring provable finality. Without the finality gadget, the users can only have probabilistic finality, like in classical blockchain systems. GRANDPA guarantees that blocks reach quicker finality and a finalized block can never be reverted. 
 
     \subsection{Full Nodes}
-        To implement our design in a standalone blockchain, we use the Substrate framework~\footnote{https://github.com/paritytech/substrate}. Substrate provides great flexibility to implement custom runtime logic with inherent BABE/GRANDPA consensus support. Our design needed major changes in the substrate codebase and hence we worked on a fork~\footnote{https://github.com/maticnetwork/substrate/tree/da-poc}. The major changes that we made are:
+        To implement our design in a standalone blockchain, we use the Substrate framework~\footnote{https://github.com/paritytech/substrate}. Substrate provides great flexibility to implement custom runtime logic with inherent BABE/GRANDPA consensus support. Our design needed major changes in the Substrate codebase and hence we worked on a separate codebase~\footnote{https://github.com/maticnetwork/avail}. The major changes that we made are:
         \begin{itemize}
             \item The contents of the block are arranged into the data matrix, extended and polynomial commitment generation is performed during the block building process. 
             \item The header structure is changed to contain the commitments as part of the header. 
             \item Block sizes are made dynamic, according to the number of transactions on the mempool. However, the maximum block size allowed is 4 MB, including the data redundancy.  
-            \item Additional RPC methods to support data availability queries are introduced. These can be used by light clients to gain confidence about availability. 
+            \item Additional RPC methods to support data availability queries are introduced. These can be used by light clients to gain confidence about availability and inclusion.
         \end{itemize}
-        We have modified the Polkadot Apps~\footnote{https://github.com/maticnetwork/apps} to build our block explorer~\footnote{https://polygon-da-explorer.matic.today/} for our development network. 
+        We have modified the Polkadot Apps~\footnote{https://github.com/maticnetwork/avail-apps} to build our block explorer~\footnote{https://testnet.polygonavail.net/} for our development network. 
 
     \subsection{Light Client}
-        In our present design, light clients are application nodes that participate in the system without investing resources to host a full node. Keeping this in mind, we have developed a light client~\footnote{https://github.com/maticnetwork/da-light-client} which keeps track of the chain header and performs availability queries to gain confidence on the availability of interested blocks. The client can gain as high confidence as deemed suitable for the specific application. We envisage the applications using our chain to host a light client.
+        In our present design, light clients are application nodes that participate in the system without investing resources to host a full node. Keeping this in mind, we have developed a light client~\footnote{https://github.com/maticnetwork/avail-light} which keeps track of the chain header and performs availability queries to gain confidence on the availability of interested blocks. They also help keeping the data available by hosting it within the light client P2P network. The client can gain as high confidence as deemed suitable for the specific application. We envisage the applications using our chain to host a light client.
 
     \subsection{On-chain Availability Guarantee}
         The \DR{} layer, when validating proofs or resolving dispute, need assurance that the underlying data is indeed available (as discussed in Sec \ref{rollup}). To enable this in an organic manner, we want to guarantee data availability to a smart contract on Ethereum (or any main chain which supports this logic). This allows the checkpoint/assertion/proof accepting smart contract to communicate with this light client contract and directly get DA assurance. 
