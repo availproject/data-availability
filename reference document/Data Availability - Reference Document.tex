@@ -226,19 +226,29 @@
 
 \section{Additional Modules}
     \subsection{Application Specific Data Retrieval}
-        We would want our construction to allow applications to download data which is only relevant to them. To enable this, we want the full nodes (or column full nodes) to prove to an application client that the complete set of data relevant to the application has been communicated.
+        We would want our construction to allow applications to download data which is only relevant to them. To enable this, we want the full nodes to prove to an application client that the complete set of data relevant to the application has been communicated.
+
+        To enable Application Specific Data Retrieval (ASDR), we have introduced two main fields:
+        \begin{itemize}
+            \item \textbf{AppID}: Every transaction has been associated with an application identifier (appID). We envision rollup or application specific chains to register as applications if they want to download parts of block with only relevant application data. Any user is free to use the default appID `0' which is used for all types of transaction, including Avail system transactions. Any transaction with nonzero appID has to be of type application data submission only. 
+            \item \textbf{appDataLookup}: Every block header contains an index field, containing the starting cell indices of application cells inside the block. This is created by the block producer when creating the block by grouping the data matrix by appID and then flattening it to infer the starting position of each group.  
+        \end{itemize}
+
+        The changes above together ensure that an application client can download only app-specific cells without downloading other application data.
+
+        However, it is worth noting that there is no reliance on the block producer to create the index or group the data correctly. This is because, we create a deterministic algorithm that all honest application clients follow. Hence, all honest clients would retrieve the same app data for a particular appID. It can happen that clients get partial data, i.e., there exists data within the block associated with an appID which was not downloaded following the algorithm. However, the aim is to have the same view of their app to all honest app clients by providing them with same data. The polynomial commitments inside header assure that two clients with access to the same header cannot receive different sets of data. 
 
         % To illustrate, let us assume a roll-up \textit{R} operates on our proposed \DA. Hence, it would want to download only transactions which are intended for \textit{R}. 
         
         % For the CMT based approach, we can use a Namespaced Merkle Tree as described in \cite{lazyledger}. We would need to make some alterations to the original construction to make it work with the CMT. We leave the exact construction details for future work. 
 
-        For the Kate Commitment based approach, let us assume that each data chunk is prepended with an application identifier (ID) which is unique to the application. 
-        % For our example, let the ID for \textit{R} be $R$. 
-        Let the data matrix $D_{n \times m}$ be filled up column-wise and let the ordering be such that all transactions relevant to a particular application are put in contiguous chunks of data. Incomplete data chunks are padded appropriately. Let the application data be spread from $D[i_1][j_1]$ to $D[i_2][j_2]$, where $1 \leq i_1, i_2 \leq n$ and $1 \leq j_1 \leq j_2 \leq m$.   
+        % For the Kate Commitment based approach, let us assume that each data chunk is prepended with an application identifier (ID) which is unique to the application. 
+        % % For our example, let the ID for \textit{R} be $R$. 
+        % Let the data matrix $D_{n \times m}$ be filled up column-wise and let the ordering be such that all transactions relevant to a particular application are put in contiguous chunks of data. Incomplete data chunks are padded appropriately. Let the application data be spread from $D[i_1][j_1]$ to $D[i_2][j_2]$, where $1 \leq i_1, i_2 \leq n$ and $1 \leq j_1 \leq j_2 \leq m$.   
 
-        With this setup, an application client can query its data from a full node. The full node need to give openings to all chunks from $D[i_1][j_1]$ to $D[i_2][j_2]$, taken column-wise. On top of that, it also needs to give openings to $D[i_1-1][j_1]$ (or $D[n][j_1-1]$ if $i_1=0$) and $D[i_2+1][j_2]$ (or $D[0][j_2+1]$ if $i_2=n$). The client can then verify that for all openings within $D[i_1][j_1]$ to $D[i_2][j_2]$, the data starts with the correct ID and for the remaining two openings, the data has a different ID. This would prove the client that it has received all relevant data, under the assumption that the ordering is done correctly (equivalently, that supermajority of validators are honest in \DA). 
+        % With this setup, an application client can query its data from a full node. The full node need to give openings to all chunks from $D[i_1][j_1]$ to $D[i_2][j_2]$, taken column-wise. On top of that, it also needs to give openings to $D[i_1-1][j_1]$ (or $D[n][j_1-1]$ if $i_1=0$) and $D[i_2+1][j_2]$ (or $D[0][j_2+1]$ if $i_2=n$). The client can then verify that for all openings within $D[i_1][j_1]$ to $D[i_2][j_2]$, the data starts with the correct ID and for the remaining two openings, the data has a different ID. This would prove the client that it has received all relevant data, under the assumption that the ordering is done correctly (equivalently, that supermajority of validators are honest in \DA). 
 
-        In case the client approaches column full nodes, it would need to approach at most ($\lceil size/n \rceil + 2$) column full nodes. 
+        % In case the client approaches column full nodes, it would need to approach at most ($\lceil size/n \rceil + 2$) column full nodes. 
     
 
 % \section{Related Work}
