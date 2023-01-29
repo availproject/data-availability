@@ -55,7 +55,7 @@
         \begin{itemize}
             \item \textbf{Data Hosting and Ordering:} This component would receive transactional data and order it without any execution. It would then store the data and ensure complete data availability in a decentralized manner. We call this component the \DA.
             \item \textbf{Execution:} The execution component should take ordered transactions from the \DA{} and execute them. It should create a checkpoint/assertion/proof and submit it to the \DR. We call this the \EX.
-            \item \textbf{Verification/Dispute Resolution:} This component represents the main chain to which the system is anchored. The security of the design is dependent on the robustness and security properties of this component along with the \DA. The checkpoint or assertion or proof submitted by \EX{} is processed by this layer to guarantee that only valid state transitions are accepted in the system (provided that the data is available). We refer to this component as the \DR. 
+            \item \textbf{Verification/Dispute Resolution:} This component represents the settlement layer to which the system is anchored. The security of the design is dependent on the robustness and security properties of this component along with the \DA. The checkpoint or assertion or proof submitted by \EX{} is processed by this layer to guarantee that only valid state transitions are accepted in the system (provided that the data is available). We refer to this component as the \DR. 
         \end{itemize}
 
         In this work, we are proposing Avail, which acts as the \DA. We envision the multiple roll-up initiatives or legacy execution layers to form the \EX. The \DR{} can be any secure settlement layer which supports the execution verification.
@@ -195,10 +195,10 @@
         We have modified the Polkadot Apps~\footnote{https://github.com/maticnetwork/avail-apps} to build our block explorer~\footnote{https://testnet.polygonavail.net/} for our test network. 
 
     \subsection{Light Client}
-        In our present design, light clients are application nodes that participate in the system without investing resources to host a full node. Keeping this in mind, we have developed a light client~\footnote{https://github.com/maticnetwork/avail-light} which keeps track of the chain header and performs availability queries to gain confidence on the availability of interested blocks. They also help keeping the data available by hosting it within the light client P2P network. The client can gain as high confidence as deemed suitable for the specific application. We envisage the applications using our chain to host a light client.
+        In our present design, light clients are nodes that participate in the system without investing resources to host a full node. We want our light clients to have very high data availability guarantees without hosting a full node or trusting on any other peer. Keeping this in mind, we have developed a light client~\footnote{https://github.com/maticnetwork/avail-light} which keeps track of the chain header and performs availability queries to gain confidence on the availability of interested blocks. They also help contribute to data availability by hosting sampled data for other light clients within the P2P network. The client can gain as high confidence as deemed suitable for the specific application. We envisage the applications using our chain to host a light client.
 
     \subsection{Ethereum Data Availability Guarantees}
-        A \DR{} layer like Ethereum, when validating proofs or resolving dispute, need assurance that the underlying data is indeed available (as discussed in Sec \ref{rollup}). To enable this in an organic manner, we want to guarantee data availability to a smart contract on Ethereum (or any main chain which supports this logic). This allows the checkpoint/assertion/proof accepting smart contract to communicate with this light client contract and directly get DA assurance. 
+        A \DR{} layer like Ethereum, when validating proofs or resolving dispute, need assurance that the underlying data is indeed available (as discussed in Sec \ref{rollup}). To enable this in an organic manner, we want to guarantee data availability to a smart contract on Ethereum (or any settlement layer which supports this logic). This allows the checkpoint/assertion/proof accepting smart contract to communicate with this light client contract and directly get DA assurance. 
 
         We discuss three main approaches on how to provide the on-chain DA guarantee. We also briefly mention their advantages and limitations. 
 
@@ -226,19 +226,29 @@
 
 \section{Additional Modules}
     \subsection{Application Specific Data Retrieval}
-        We would want our construction to allow applications to download data which is only relevant to them. To enable this, we want the full nodes (or column full nodes) to prove to an application client that the complete set of data relevant to the application has been communicated.
+        We would want our construction to allow applications to download data which is only relevant to them. To enable this, we want the full nodes to prove to an application client that the complete set of data relevant to the application has been communicated.
+
+        To enable Application Specific Data Retrieval (ASDR), we have introduced two main fields:
+        \begin{itemize}
+            \item \textbf{AppID}: Every transaction has been associated with an application identifier (appID). We envision rollup or application specific chains to register as applications if they want to download parts of block with only relevant application data. Any user is free to use the default appID `0' which is used for all types of transaction, including Avail system transactions. Any transaction with nonzero appID has to be of type application data submission only. 
+            \item \textbf{appDataLookup}: Every block header contains an index field, containing the starting cell indices of application cells inside the block. This is created by the block producer when creating the block by grouping the data matrix by appID and then flattening it to infer the starting position of each group.  
+        \end{itemize}
+
+        The changes above together ensure that an application client can download only app-specific cells without downloading other application data.
+
+        However, it is worth noting that there is no reliance on the block producer to create the index or group the data correctly. This is because, we create a deterministic algorithm that all honest application clients follow. Hence, all honest clients would retrieve the same app data for a particular appID. It can happen that clients get partial data, i.e., there exists data within the block associated with an appID which was not downloaded following the algorithm. However, the aim is to have the same view of their app to all honest app clients by providing them with same data. The polynomial commitments inside header assure that two clients with access to the same header cannot receive different sets of data. 
 
         % To illustrate, let us assume a roll-up \textit{R} operates on our proposed \DA. Hence, it would want to download only transactions which are intended for \textit{R}. 
         
         % For the CMT based approach, we can use a Namespaced Merkle Tree as described in \cite{lazyledger}. We would need to make some alterations to the original construction to make it work with the CMT. We leave the exact construction details for future work. 
 
-        For the Kate Commitment based approach, let us assume that each data chunk is prepended with an application identifier (ID) which is unique to the application. 
-        % For our example, let the ID for \textit{R} be $R$. 
-        Let the data matrix $D_{n \times m}$ be filled up column-wise and let the ordering be such that all transactions relevant to a particular application are put in contiguous chunks of data. Incomplete data chunks are padded appropriately. Let the application data be spread from $D[i_1][j_1]$ to $D[i_2][j_2]$, where $1 \leq i_1, i_2 \leq n$ and $1 \leq j_1 \leq j_2 \leq m$.   
+        % For the Kate Commitment based approach, let us assume that each data chunk is prepended with an application identifier (ID) which is unique to the application. 
+        % % For our example, let the ID for \textit{R} be $R$. 
+        % Let the data matrix $D_{n \times m}$ be filled up column-wise and let the ordering be such that all transactions relevant to a particular application are put in contiguous chunks of data. Incomplete data chunks are padded appropriately. Let the application data be spread from $D[i_1][j_1]$ to $D[i_2][j_2]$, where $1 \leq i_1, i_2 \leq n$ and $1 \leq j_1 \leq j_2 \leq m$.   
 
-        With this setup, an application client can query its data from a full node. The full node need to give openings to all chunks from $D[i_1][j_1]$ to $D[i_2][j_2]$, taken column-wise. On top of that, it also needs to give openings to $D[i_1-1][j_1]$ (or $D[n][j_1-1]$ if $i_1=0$) and $D[i_2+1][j_2]$ (or $D[0][j_2+1]$ if $i_2=n$). The client can then verify that for all openings within $D[i_1][j_1]$ to $D[i_2][j_2]$, the data starts with the correct ID and for the remaining two openings, the data has a different ID. This would prove the client that it has received all relevant data, under the assumption that the ordering is done correctly (equivalently, that supermajority of validators are honest in \DA). 
+        % With this setup, an application client can query its data from a full node. The full node need to give openings to all chunks from $D[i_1][j_1]$ to $D[i_2][j_2]$, taken column-wise. On top of that, it also needs to give openings to $D[i_1-1][j_1]$ (or $D[n][j_1-1]$ if $i_1=0$) and $D[i_2+1][j_2]$ (or $D[0][j_2+1]$ if $i_2=n$). The client can then verify that for all openings within $D[i_1][j_1]$ to $D[i_2][j_2]$, the data starts with the correct ID and for the remaining two openings, the data has a different ID. This would prove the client that it has received all relevant data, under the assumption that the ordering is done correctly (equivalently, that supermajority of validators are honest in \DA). 
 
-        In case the client approaches column full nodes, it would need to approach at most ($\lceil size/n \rceil + 2$) column full nodes. 
+        % In case the client approaches column full nodes, it would need to approach at most ($\lceil size/n \rceil + 2$) column full nodes. 
     
 
 % \section{Related Work}
