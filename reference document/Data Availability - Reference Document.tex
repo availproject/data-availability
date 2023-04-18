@@ -7,7 +7,7 @@
 \setcopyright{none}
 \renewcommand\footnotetextcopyrightpermission[1]{}
 
-\hypersetup{pdftitle={Matic - Data Availability}}
+\hypersetup{pdftitle={Avail - Data Availability}}
 
 \newcommand{\DA}{\textit{DA layer}}
 \newcommand{\EX}{\textit{Exec layer}}
@@ -16,11 +16,11 @@
 \begin{document}
 
 \title{Avail: The Data Availability Blockchain}
-\author{Polygon \vspace{1cm}}
+\author{Avail \vspace{1cm}}
 
 \begin{abstract}
     % We discuss a blockchain design where the data hosting and availability, contract execution and dispute resolution is decoupled. We further propose the details of the data layer which guarantees availability. 
-    We study the scalability issue in present blockchain architecture and propose a design which decouples the data hosting, execution and verification. We discuss few suitable primitives for the construction of a data hosting layer that guarantees data availability. We sketch out the system goals, design, security and implementation details of Polygon Avail which is our availability focussed blockchain solution. 
+    We study the scalability issue in present blockchain architecture and propose a design which decouples the data hosting, execution and verification. We discuss few suitable primitives for the construction of a data hosting layer that guarantees data availability. We sketch out the system goals, design, security and implementation details of Avail which is our availability focussed blockchain solution. 
 \end{abstract}
 
 \maketitle
@@ -38,7 +38,7 @@
 
     Optimistic Rollups like Arbitrum and Optimism use the optimistic execution paradigm where a manager/operator executes the sidechain transactions and submits an assertion on the main chain. In case of dispute, other participants can challenge the assertion on chain within a fixed timeout and then the main chain performs the dispute resolution. While this scales up the transaction processing rate, it has a few downsides like delayed finality for non-fungible assets among others. 
 
-    Zero-knowledge based rollups like Polygon Hermez and Starkware take the ZK based approach to off-chain execution. The operators execute the transactions and submit a ZK proof to the main chain. The main chain can quickly verify the proof and on-chain participants can be assured that only valid state transitions were performed. 
+    Zero-knowledge based rollups like Polygon zkEVM and Starkware take the ZK based approach to off-chain execution. The operators execute the transactions and submit a ZK proof to the main chain. The main chain can quickly verify the proof and on-chain participants can be assured that only valid state transitions were performed. 
 
     Another class of rollup is Validium which is a hybrid between Plasma and ZK based rollups. They make use of Zero-knowledge based proofs of execution and at the same time keep the transactional data off-chain. Although this improves the throughput of the system, they suffer similar problems to that of Plasma. User funds can be frozen or seized and other crypto-economic attacks are also possible on such a system. \cite{StarkEx:2020} provides a detailed discussion on the approach and possible attacks. 
 
@@ -185,17 +185,17 @@
         GRANDPA (GHOST-based Recursive ANcestor Deriving Prefix Agreement)~\cite{grandpa} is a finality gadget ensuring provable finality. Without the finality gadget, the users can only have probabilistic finality, like in classical blockchain systems. GRANDPA guarantees that blocks reach quicker finality and a finalized block can never be reverted. 
 
     \subsection{Full Nodes}
-        To implement our design in a standalone blockchain, we use the Substrate framework~\footnote{https://github.com/paritytech/substrate}. Substrate provides great flexibility to implement custom runtime logic with inherent BABE/GRANDPA consensus support. Our design needed major changes in the Substrate codebase and hence we worked on a separate codebase~\footnote{https://github.com/maticnetwork/avail}. The major changes that we made are:
+        To implement our design in a standalone blockchain, we use the Substrate framework~\footnote{https://github.com/paritytech/substrate}. Substrate provides great flexibility to implement custom runtime logic with inherent BABE/GRANDPA consensus support. Our design needed major changes in the Substrate codebase and hence we worked on a separate codebase~\footnote{https://github.com/availproject/avail}. The major changes that we made are:
         \begin{itemize}
             \item The contents of the block are arranged into the data matrix, extended and polynomial commitment generation is performed during the block building process. 
             \item The header structure is changed to contain the commitments as part of the header. 
             \item Block sizes are made dynamic, according to the number of transactions on the mempool. However, the maximum block size allowed is 4 MB, including the data redundancy.  
             \item Additional RPC methods to support data availability queries are introduced. These can be used by light clients to gain confidence about availability and inclusion.
         \end{itemize}
-        We have modified the Polkadot Apps~\footnote{https://github.com/maticnetwork/avail-apps} to build our block explorer~\footnote{https://testnet.polygonavail.net/} for our test network. 
+        We have modified the Polkadot Apps~\footnote{https://github.com/availproject/avail-apps} to build our block explorer~\footnote{https://testnet.avail.tools/} for our test network. 
 
     \subsection{Light Client}
-        In our present design, light clients are nodes that participate in the system without investing resources to host a full node. We want our light clients to have very high data availability guarantees without hosting a full node or trusting on any other peer. Keeping this in mind, we have developed a light client~\footnote{https://github.com/maticnetwork/avail-light} which keeps track of the chain header and performs availability queries to gain confidence on the availability of interested blocks. They also help contribute to data availability by hosting sampled data for other light clients within the P2P network. The client can gain as high confidence as deemed suitable for the specific application. We envisage the applications using our chain to host a light client.
+        In our present design, light clients are nodes that participate in the system without investing resources to host a full node. We want our light clients to have very high data availability guarantees without hosting a full node or trusting on any other peer. Keeping this in mind, we have developed a light client~\footnote{https://github.com/availproject/avail-light} which keeps track of the chain header and performs availability queries to gain confidence on the availability of interested blocks. They also help contribute to data availability by hosting sampled data for other light clients within the P2P network. The client can gain as high confidence as deemed suitable for the specific application. We envisage the applications using our chain to host a light client.
 
     \subsection{Ethereum Data Availability Guarantees}
         A \DR{} layer like Ethereum, when validating proofs or resolving dispute, need assurance that the underlying data is indeed available (as discussed in Sec \ref{rollup}). To enable this in an organic manner, we want to guarantee data availability to a smart contract on Ethereum (or any settlement layer which supports this logic). This allows the checkpoint/assertion/proof accepting smart contract to communicate with this light client contract and directly get DA assurance. 
