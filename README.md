@@ -5,7 +5,7 @@
 
 <br>
 
-Avail is a data availability focused blockchain. Here is a list of GitHub repo tracking the various development efforts in this regard. 
+Avail is a Web3 infrastructure layer that allows modular execution layers to scale and interoperate in a trust minimized way. Below, you can find a list of some of the relevant GitHub repositories.
 
 |    Name (with link)    |                                       Description                                       |
 |:----------------------:|:---------------------------------------------------------------------------------------:|
@@ -28,7 +28,7 @@ There are two main components in the Avail network:
 
 ![Avail Architecture](./images/Light%20Client%20P2P%20Network.jpg)
 
-## Data Attestation Bridge
+## Bridge between Avail and Ethereum using VectorX
 
-To enable Validium constructions based on Ethereum, it is important to push data roots from Avail to Ethereum. We partner with [Nomad](https://www.nomad.xyz/) for building the data attestation bridge. Overall, the architecture looks like as follows:
+The Avail team has partnered with [Succinct labs](https://succinct.xyz/) to develop a trust-minimized bridge between Avail DA and Ethereum. VectorX enables efficient and trust-minimized bridging of arbitrary messages between Avail DA and Ethereum, which enables use cases like token bridging. You can use the [bridge](https://docs.availproject.org/docs/end-user-guide/vectorx) through the [official UI](bridge.availproject.org). 
 
