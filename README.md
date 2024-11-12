@@ -9,7 +9,7 @@ Avail is a Web3 infrastructure layer that allows modular execution layers to sca
 
 |    Name (with link)    |                                       Description                                       |
 |:----------------------:|:---------------------------------------------------------------------------------------:|
-| [Reference Document](https://github.com/availproject/data-availability/blob/master/reference%20document/Avail%20Reference%20Paper%20v2%2017%20Sept%202024.pdf)     | Document containing the overall rationale, design decisions and theoretical backgrounds                              |
+| [Reference Document]([https://github.com/availproject/data-availability/blob/master/reference%20document/Avail%20Reference%20Paper%20v2%2017%20Sept%202024.pdf](https://github.com/availproject/data-availability/blob/93c547ce4efce3e992b573179a8d22b3657fdcee/reference%20document/Avail%20Reference%20Paper%20v2.1%206%20Nov%202024.pdf))     | Document containing the overall rationale, design decisions and theoretical backgrounds                              |
 | [Avail Node](https://github.com/availproject/avail)                             | Avail node implementation repo. Built using Substrate.              |
 | [Light Client](https://github.com/availproject/avail-light)                     | Light client designed to check data availability proofs on Avail.   |
 | [Explorer](https://github.com/availproject/avail-apps)                                | Avail explorer implementation repo. Built using Polkadot apps.      |
